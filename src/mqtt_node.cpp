@@ -9,18 +9,22 @@ class Pose2mqtt{
 private:
     ros::NodeHandle n;
     ros::Subscriber pose_sub;
-    ros::Publisher mqtt_pub;
+    ros::Publisher position_mqtt_pub;
+    ros::Publisher quat_mqtt_pub;
 public:
     Pose2mqtt(){};
-    Pose2mqtt(const std::string& input, const std::string& output){
-        mqtt_pub = n.advertise<std_msgs::String>(output, 10);
+    Pose2mqtt(const std::string& input, const std::string& output, const std::string& output2){
+        position_mqtt_pub = n.advertise<std_msgs::String>(output, 10);
+        quat_mqtt_pub = n.advertise<std_msgs::String>(output2, 10);
         pose_sub = n.subscribe<geometry_msgs::PoseStamped>(input, 10, &Pose2mqtt::pose_cb, this);    
     };
     
     void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
         std_msgs::String output_string;
-        std::stringstream ss;
-        ss << std::fixed << std::setprecision(2);
+        std_msgs::String output_quat;
+        std::stringstream sp , sq;
+        sp << std::fixed << std::setprecision(2);
+        sq << std::fixed << std::setprecision(2);
         float px, py, pz, ox, oy, oz, ow;
         px = msg->pose.position.x;
         py = msg->pose.position.y;
@@ -29,11 +33,17 @@ public:
         oy = msg->pose.orientation.y;
         oz = msg->pose.orientation.z;
         ow = msg->pose.orientation.w;        
-        ss << "x: " << (px >= 0 ? "+" : "") << round(100*px)/100 << ", ";
-        ss << "y: " << (py >= 0 ? "+" : "") << round(100*py)/100 << ", ";
-        ss << "z: " << (pz >= 0 ? "+" : "") << round(100*pz)/100 ;
-        output_string.data = ss.str();
-        mqtt_pub.publish(output_string);
+        sp << "x: " << (px >= 0 ? "+" : "") << round(100*px)/100 << ", ";
+        sp << "y: " << (py >= 0 ? "+" : "") << round(100*py)/100 << ", ";
+        sp << "z: " << (pz >= 0 ? "+" : "") << round(100*pz)/100 ;
+        sq << "x: " << (ox >= 0 ? "+" : "") << round(100*ox)/100 << ", ";
+        sq << "y: " << (oy >= 0 ? "+" : "") << round(100*oy)/100 << ", ";
+        sq << "z: " << (oz >= 0 ? "+" : "") << round(100*oz)/100 << ", ";
+        sq << "w: " << (ow >= 0 ? "+" : "") << round(100*ow)/100 ;
+        output_string.data = sp.str();
+        output_quat.data = sq.str();
+        position_mqtt_pub.publish(output_string);
+        quat_mqtt_pub.publish(output_quat);
         ros::Rate rate(1.0);
         rate.sleep();
     }
@@ -94,7 +104,7 @@ public:
 
 int main (int argc, char** argv){
     ros::init(argc, argv, "mqtt_node");
-    Pose2mqtt pose("/mavros/local_position/pose", "/pose_o/primitive");
+    Pose2mqtt pose("/mavros/local_position/pose", "/pose_o/primitive", "/quat_o/primitive");
     vel2mqtt vel("/mavros/local_position/velocity_body", "/vel_o/primitive");
     battery2mqtt battery("/mavros/battery", "/battery_o/primitive");
     ros::spin();
