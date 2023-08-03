@@ -157,6 +157,10 @@ add_executable(mqtt_node src/mqtt_node.cpp)
 target_link_libraries(mqtt_node
   ${catkin_LIBRARIES}
 )
+add_executable(mqtt_offb src/mqtt_offb.cpp)
+target_link_libraries(mqtt_offb
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############
