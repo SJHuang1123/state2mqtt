@@ -3,51 +3,70 @@
 #include <std_msgs/String.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <sensor_msgs/BatteryState.h>
+#include <sensor_msgs/NavSatFix.h>
+#include <sensor_msgs/Imu.h>
 #include <cmath>
 
-class Pose2mqtt{
+class IMU2mqtt{
 private:
     ros::NodeHandle n;
-    ros::Subscriber pose_sub;
-    ros::Publisher position_mqtt_pub;
-    ros::Publisher quat_mqtt_pub;
+    ros::Subscriber IMU_sub;
+    ros::Publisher mqtt_pub;
 public:
-    Pose2mqtt(){};
-    Pose2mqtt(const std::string& input, const std::string& output, const std::string& output2){
-        position_mqtt_pub = n.advertise<std_msgs::String>(output, 10);
-        quat_mqtt_pub = n.advertise<std_msgs::String>(output2, 10);
-        pose_sub = n.subscribe<geometry_msgs::PoseStamped>(input, 10, &Pose2mqtt::pose_cb, this);    
+    IMU2mqtt(){};
+    IMU2mqtt(const std::string& input, const std::string& output){
+        mqtt_pub = n.advertise<std_msgs::String>(output, 10);
+        IMU_sub = n.subscribe<sensor_msgs::Imu>(input, 10, &IMU2mqtt::IMU_cb, this);   
     };
-    
-    void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
+
+    void IMU_cb(const sensor_msgs::Imu::ConstPtr& msg){
         std_msgs::String output_string;
-        std_msgs::String output_quat;
-        std::stringstream sp , sq;
-        sp << std::fixed << std::setprecision(2);
-        sq << std::fixed << std::setprecision(2);
-        float px, py, pz, ox, oy, oz, ow;
-        px = msg->pose.position.x;
-        py = msg->pose.position.y;
-        pz = msg->pose.position.z;
-        ox = msg->pose.orientation.x;
-        oy = msg->pose.orientation.y;
-        oz = msg->pose.orientation.z;
-        ow = msg->pose.orientation.w;        
-        sp << "x: " << (px >= 0 ? "+" : "") << round(100*px)/100 << ", ";
-        sp << "y: " << (py >= 0 ? "+" : "") << round(100*py)/100 << ", ";
-        sp << "z: " << (pz >= 0 ? "+" : "") << round(100*pz)/100 ;
-        sq << "x: " << (ox >= 0 ? "+" : "") << round(100*ox)/100 << ", ";
-        sq << "y: " << (oy >= 0 ? "+" : "") << round(100*oy)/100 << ", ";
-        sq << "z: " << (oz >= 0 ? "+" : "") << round(100*oz)/100 << ", ";
-        sq << "w: " << (ow >= 0 ? "+" : "") << round(100*ow)/100 ;
-        output_string.data = sp.str();
-        output_quat.data = sq.str();
-        position_mqtt_pub.publish(output_string);
-        quat_mqtt_pub.publish(output_quat);
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(2);
+        float x, y, z, w;
+        x = msg->orientation.x;
+        y = msg->orientation.y;
+        z = msg->orientation.z;
+        w = msg->orientation.w;        
+        ss << "x: " << (x >= 0 ? "+" : "") << round(100*x)/100 << ", ";
+        ss << "y: " << (y >= 0 ? "+" : "") << round(100*y)/100 << ", ";
+        ss << "z: " << (z >= 0 ? "+" : "") << round(100*z)/100 << ", ";
+        ss << "w: " << (w >= 0 ? "+" : "") << round(100*w)/100 ;
+        output_string.data = ss.str();
+        mqtt_pub.publish(output_string);
         ros::Rate rate(1.0);
         rate.sleep();
     }
+};
+
+class GPS2mqtt{
+private:
+    ros::NodeHandle n;
+    ros::Subscriber GPS_sub;
+    ros::Publisher mqtt_pub;
+public:
+    GPS2mqtt(){};
+    GPS2mqtt(const std::string& input, const std::string& output){
+        mqtt_pub = n.advertise<std_msgs::String>(output, 10);
+        GPS_sub = n.subscribe<sensor_msgs::NavSatFix>(input, 10, &GPS2mqtt::GPS_cb, this);   
+    };
     
+    void GPS_cb(const sensor_msgs::NavSatFix::ConstPtr& msg){
+        std_msgs::String output_string;
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(2);
+        float altitude, longitude, latitude;
+        altitude = msg->altitude;
+        longitude = msg->longitude;
+        latitude = msg->latitude;
+        ss << "altitude: " << (altitude >= 0 ? "+" : "") << round(10000*altitude)/10000 << ", ";
+        ss << "longitude: " << (longitude >= 0 ? "+" : "") << round(10000*longitude)/10000 << ", ";
+        ss << "latitude: " << (latitude >= 0 ? "+" : "") << round(10000*latitude)/10000;
+        output_string.data = ss.str();
+        mqtt_pub.publish(output_string);
+        ros::Rate rate(1.0);
+        rate.sleep();
+    }
 };
 
 class vel2mqtt{
@@ -96,7 +115,7 @@ public:
         std_msgs::String string;
         string.data = std::to_string(msg->percentage);
         mqtt_pub.publish(string);
-	ros::Rate rate(1.0);
+	    ros::Rate rate(1.0);
         rate.sleep();
     }
 };
@@ -104,8 +123,9 @@ public:
 
 int main (int argc, char** argv){
     ros::init(argc, argv, "mqtt_node");
-    Pose2mqtt pose("/mavros/local_position/pose", "/pose_o/primitive", "/quat_o/primitive");
+    IMU2mqtt imu("/mavros/imu/data", "/IMU_o/primitive");
     vel2mqtt vel("/mavros/local_position/velocity_body", "/vel_o/primitive");
     battery2mqtt battery("/mavros/battery", "/battery_o/primitive");
+    GPS2mqtt position("/mavros/global_position/global", "/GPS_o/primitive");    
     ros::spin();
 }
