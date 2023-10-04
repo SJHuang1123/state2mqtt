@@ -19,7 +19,7 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg){
     current_state = *msg;
 }
 
-void off_req_cb(const std_msgs::String::ConstPtr& msg){
+void offb_req_cb(const std_msgs::String::ConstPtr& msg){
     s = *msg;
 }
 
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     ros::Subscriber mqtt_sub = nh.subscribe<geometry_msgs::Point>
             ("/mqtt_test", 10, mqtt_cb);  
     ros::Subscriber off_req_sub = nh.subscribe<std_msgs::String>
-            ("/off_req", 10, off_req_cb);              
+            ("/offb_req", 10, offb_req_cb);              
     ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>
             ("mavros/setpoint_position/local", 10);
     ros::ServiceClient arming_client = nh.serviceClient<mavros_msgs::CommandBool>

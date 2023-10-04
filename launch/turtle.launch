@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find mqtt_client)/launch/standalone.launch"/>
+    <node pkg="turtlesim" type="turtlesim_node" name="turtle1" output="screen"/>
+</launch>

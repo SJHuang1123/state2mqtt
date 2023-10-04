@@ -54,7 +54,7 @@ public:
     void GPS_cb(const sensor_msgs::NavSatFix::ConstPtr& msg){
         std_msgs::String output_string;
         std::stringstream ss;
-        ss << std::fixed << std::setprecision(2);
+        ss << std::fixed << std::setprecision(6);
         float altitude, longitude, latitude;
         altitude = msg->altitude;
         longitude = msg->longitude;
