@@ -34,6 +34,7 @@ public:
         ss << "w: " << (w >= 0 ? "+" : "") << round(100*w)/100 ;
         output_string.data = ss.str();
         mqtt_pub.publish(output_string);
+        std::cout << output_string << "\n";
         ros::Rate rate(1.0);
         rate.sleep();
     }
@@ -64,6 +65,7 @@ public:
         ss << "latitude: " << (latitude >= 0 ? "+" : "") << round(10000*latitude)/10000;
         output_string.data = ss.str();
         mqtt_pub.publish(output_string);
+        std::cout << output_string << "\n";
         ros::Rate rate(1.0);
         rate.sleep();
     }
@@ -94,6 +96,7 @@ public:
         ss << "z: " << (z >= 0 ? "+" : "") << round(100*z)/100;
         output_string.data = ss.str();
         mqtt_pub.publish(output_string);
+        std::cout << output_string << "\n";
         ros::Rate rate(1.0);
         rate.sleep();
     }
@@ -115,6 +118,7 @@ public:
         std_msgs::String string;
         string.data = std::to_string(msg->percentage);
         mqtt_pub.publish(string);
+        std::cout << string << "\n";
 	    ros::Rate rate(1.0);
         rate.sleep();
     }
